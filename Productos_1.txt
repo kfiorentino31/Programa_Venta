@@ -1,0 +1,129 @@
+PRODUCTOS_CSV = 'data/productos.csv'
+CAMPOS = ['id','codigo_producto','producto','precio','unidad_venta']
+
+def inicializar_csv():
+    if not os.path.exists(PRODUCTOS_CSV):
+        with open(PRODUCTOS_CSV, 'w', newline='', encoding='utf-8') as archivo:
+            writer = csv.DictWriter(archivo, fieldnames=CAMPOS)
+            writer.writeheader()
+            print(f"Archivo {PRODUCTOS_CSV} creado exitosamente.")
+            
+def  obtener_datos():
+    datos = []
+        
+    try:
+        with open(PRODUCTOS_CSV, 'r', newline='', encoding='utf-8') as archivo:
+            reader = csv.DictReader(archivo)
+        
+            for fila in reader:
+                datos.append(fila)
+    except FileNotFoundError:
+        print(f'El archivo {PRODUCTOS_CSV} no existe. Valide si el archivo fue borrado o cambiado de ruta.')
+        
+    return datos
+            
+def id_auto(datos):
+    if not datos:
+        return 1
+    
+    max_id = max(int(producto['id']) for producto in datos if producto['id'].isdigit())
+    
+    return max_id + 1
+
+    
+def agregar_productos():
+    inicializar_csv()
+    
+    datos = obtener_datos()
+    nuevo_id = id_auto(datos)
+    
+    print('\n----------Registro de Productos----------')
+    
+    registro = {
+        'id': str(nuevo_id)
+    }
+
+    registro['codigo_producto'] = input('Código: ')
+    registro['producto'] = input('Nombre de producto: ')
+    registro['precio'] = input('Precio: ')
+    registro['unidad_venta'] = input("¿Cómo se venderá el producto (gls./und.)? ")
+    
+    if registro['unidad_venta'] == 'u':
+            registro['unidad_venta'] = 'unidad'
+    else:
+        registro['unidad_venta'] = 'galones'
+    
+    datos.append(registro)
+    
+    with open(PRODUCTOS_CSV, mode='a', newline='',encoding='utf-8') as archivo:
+        writer = csv.DictWriter(archivo, fieldnames=CAMPOS)
+        writer.writerow(registro)
+        
+        print("\n----------------------------------------------------")
+        print("         Producto registrado exitosamente.")
+        print("----------------------------------------------------\n")
+
+
+def  ver_productos():
+    df = pd.read_csv('data/productos.csv', encoding='utf-8')
+    pd.set_option('display.max_columns', None)
+    pd.set_option('display.width', None)
+    
+    print(tabulate(df, headers='keys', tablefmt='fancy_grid')) # type: ignore
+    
+def  eliminar_productos(campo, valor):
+    with open(PRODUCTOS_CSV, mode='r', newline='',encoding='utf-8') as archivo:
+        reader = csv.DictReader(archivo)
+        filas = [fila for fila in reader if fila[campo] != str(valor)]
+        
+    if not filas:
+        print("\n----------------------------------------------------")
+        print("         Producto eliminado correctamente")
+        print("----------------------------------------------------\n")
+        return
+        
+    with open(PRODUCTOS_CSV, mode='w', newline='', encoding='utf-8') as archivo:
+        writer = csv.DictWriter(archivo,fieldnames=CAMPOS)
+        writer.writeheader()
+        writer.writerows(filas)
+        
+        print("\n----------------------------------------------------")
+        print("         Producto eliminado correctamente")
+        print("----------------------------------------------------\n")
+
+
+
+def menu_productos():
+    inicializar_csv()
+    while True:
+        print("\n==== SISTEMA DE VENTA DE COMBUSTIBLE ====")
+        print("\n---PRODUCTOS---\n"
+            "1. Lista de productos\n"
+            "2. Agregar Producto\n"
+            "3. Modificar Producto\n"
+            "4. Eliminar producto\n"
+            "5. Volver\n")
+        
+        opcion = input('Seleccione una opción: ')
+
+        if opcion == '5':
+                print('Volviendo al menú principal...')
+                break
+        
+        elif opcion == '1':
+            ver_productos()
+        elif opcion == '2':
+            agregar_productos()           
+        elif opcion == '3':
+            pass
+        elif opcion == '4':
+            campo = input('Digite campo: ')
+            valor = input('Valor a eliminar: ')
+            eliminar_productos(campo,valor)        
+        else:
+            print('Ingresa una opción valida.')
+               
+        continue
+        
+    
+    

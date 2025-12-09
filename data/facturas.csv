@@ -1,3 +1,0 @@
-id,tipo_factura,numero,fecha,rnc,cliente,producto,cantidad,monto,ITBIS,TOTAL
-1,Con Comprobante Fiscal,F-1,20/11/2025 22:12:22,130159777,MAGYCORP SRL,Gasolina Regular,5.504587155963303,1500.0,0.0,1500.0
-2,Con Comprobante Fiscal,F-2,20/11/2025 22:47:53,132025318,SUPER VISION ALC MULTISERVICES SRL,Gasolina Regular,6.972477064220183,1900.0,0.0,1900.0

@@ -1,105 +1,109 @@
-import csv
-import os
 import pandas as pd
 from tabulate import tabulate
+from database import conectar
+from supabase import SupabaseException
+from colorama import init,Fore
+init()
 
-PRODUCTOS_CSV = 'data/productos.csv'
-CAMPOS = ['id','codigo_producto','producto','precio','unidad_venta']
+try:
+    supabase = conectar()
+except Exception as e:
+    print("Error al conectar a Supabase:", e)
 
-def inicializar_csv():
-    if not os.path.exists(PRODUCTOS_CSV):
-        with open(PRODUCTOS_CSV, 'w', newline='', encoding='utf-8') as archivo:
-            writer = csv.DictWriter(archivo, fieldnames=CAMPOS)
-            writer.writeheader()
-            print(f"Archivo {PRODUCTOS_CSV} creado exitosamente.")
-            
-def  obtener_datos():
-    datos = []
-        
-    try:
-        with open(PRODUCTOS_CSV, 'r', newline='', encoding='utf-8') as archivo:
-            reader = csv.DictReader(archivo)
-        
-            for fila in reader:
-                datos.append(fila)
-    except FileNotFoundError:
-        print(f'El archivo {PRODUCTOS_CSV} no existe. Valide si el archivo fue borrado o cambiado de ruta.')
-        
+def obtener_prductos():
+    datos = supabase.table("productos").select("id").order("id", desc=True).execute()
     return datos
-            
-def id_auto(datos):
-    if not datos:
-        return 1
-    
-    max_id = max(int(producto['id']) for producto in datos if producto['id'].isdigit())
-    
-    return max_id + 1
 
-    
 def agregar_productos():
-    inicializar_csv()
-    
-    datos = obtener_datos()
-    nuevo_id = id_auto(datos)
-    
-    print('\n----------Registro de Productos----------')
-    
-    registro = {
-        'id': str(nuevo_id)
-    }
+    codigo = input("Código: ")
+    nombre = input("Nombre de producto: ")
+    precio = float(input("Precio: "))
+    unidad = input("Unidad (u/g): ").lower()
 
-    registro['codigo_producto'] = input('Código: ')
-    registro['producto'] = input('Nombre de producto: ')
-    registro['precio'] = input('Precio: ')
-    registro['unidad_venta'] = input("¿Cómo se venderá el producto (gls./und.)? ")
-    
-    if registro['unidad_venta'] == 'u':
-            registro['unidad_venta'] = 'unidad'
+    if unidad == "u":
+        unidad = "Undidad"
+    elif unidad == "g":
+        unidad = "Galones"
     else:
-        registro['unidad_venta'] = 'galones'
-    
-    datos.append(registro)
-    
-    with open(PRODUCTOS_CSV, mode='a', newline='',encoding='utf-8') as archivo:
-        writer = csv.DictWriter(archivo, fieldnames=CAMPOS)
-        writer.writerow(registro)
-        
-        print("\n----------------------------------------------------")
-        print("         Producto registrado exitosamente.")
-        print("----------------------------------------------------\n")
+        print("Unidad no válida. Use 'u' o 'g'.")
+        return
+    try:
+        data = supabase.table("productos").insert({
+            "codigo_producto": codigo,
+            "producto": nombre,
+            "precio": precio,
+            "unidad_venta": unidad
+        }).execute()
 
+        print(Fore.GREEN+"\nProducto registrado exitosamente."+Fore.RESET)
+        print(f"{Fore.GREEN}{data.data}{Fore.RESET}")
+
+    except SupabaseException as e:
+        print("Error: ",e)
 
 def  ver_productos():
-    df = pd.read_csv('data/productos.csv', encoding='utf-8')
-    pd.set_option('display.max_columns', None)
-    pd.set_option('display.width', None)
-    
-    print(tabulate(df, headers='keys', tablefmt='fancy_grid')) # type: ignore
-    
-def  eliminar_productos(campo, valor):
-    with open(PRODUCTOS_CSV, mode='r', newline='',encoding='utf-8') as archivo:
-        reader = csv.DictReader(archivo)
-        filas = [fila for fila in reader if fila[campo] != str(valor)]
-        
-    if not filas:
-        print("\n----------------------------------------------------")
-        print("         Producto eliminado correctamente")
-        print("----------------------------------------------------\n")
-        return
-        
-    with open(PRODUCTOS_CSV, mode='w', newline='', encoding='utf-8') as archivo:
-        writer = csv.DictWriter(archivo,fieldnames=CAMPOS)
-        writer.writeheader()
-        writer.writerows(filas)
-        
-        print("\n----------------------------------------------------")
-        print("         Producto eliminado correctamente")
-        print("----------------------------------------------------\n")
+    try:
+        datos = supabase.table("productos").select("*").execute()
+        df = datos.data
 
+        if not df:
+            print("No hay productos registrados.")
+            return
+        
+        print(tabulate(df, headers="keys", tablefmt="fancy_grid")) # type: ignore
+    
+    except SupabaseException as e:
+        print("Error al obtener productos:", e)
 
+def modificar_producto():
+    while True:
+        print("=== Opciones ===")
+        print("1. Modificar producto\n"
+              "2. Modificar codigo\n"
+              "3. Modificar precio\n"
+              "4. Salir\n")
+        
+        try:
+            opcion = input('Seleccione una opción: ')
+
+            if opcion == '1':
+                codigo = input('Código de producto: ')
+                nuevo_producto = input('Nuevo producto: ')
+                data = supabase.table('productos').update({"producto":nuevo_producto}).eq("codigo_producto",codigo).execute()
+                
+                print(Fore.GREEN+"\nProducto actualizado exitosamente."+Fore.RESET)
+                print(data.data)
+                
+            elif opcion == '2':
+                codigo = input('Código de producto: ')
+                nuevo_codigo = input('Nuevo código: ')
+                data = supabase.table('productos').update({"codigo_producto":nuevo_codigo}).eq("codigo_producto",codigo).execute()
+                
+                print(Fore.GREEN+"\nProducto actualizado exitosamente."+Fore.RESET)
+                print(f"{Fore.GREEN}{data.data}{Fore.RESET}")
+            
+            elif opcion == '3':
+                codigo = input('Código de producto: ')
+                nuevo_precio = input('Nuevo precio: ')
+                data = supabase.table('productos').update({"precio":nuevo_precio}).eq("codigo_producto",codigo).execute()
+                
+                print(Fore.GREEN+"\nProducto actualizado exitosamente."+Fore.RESET)
+                print(f"{Fore.GREEN}{data.data}{Fore.RESET}")
+            
+            elif opcion == '4':
+                print("Cancelado")
+                break
+
+        except SupabaseException as e:
+            print("Error: ",e)
+
+def  eliminar_productos():
+        codigo = input("Código del producto a eliminar:  ")
+        data = supabase.table('productos').delete().eq("codigo_producto",codigo).execute()
+        print(Fore.GREEN+"\nProducto eliminado exitosamente."+Fore.RESET)
+        print(f"{Fore.GREEN}{data.data}{Fore.RESET}")
 
 def menu_productos():
-    inicializar_csv()
     while True:
         print("\n==== SISTEMA DE VENTA DE COMBUSTIBLE ====")
         print("\n---PRODUCTOS---\n"
@@ -112,19 +116,17 @@ def menu_productos():
         opcion = input('Seleccione una opción: ')
 
         if opcion == '5':
-                print('Volviendo al menú principal...')
-                break
+            print('Volviendo al menú principal...')
+            break
         
         elif opcion == '1':
             ver_productos()
         elif opcion == '2':
             agregar_productos()           
         elif opcion == '3':
-            pass
+            modificar_producto()
         elif opcion == '4':
-            campo = input('Digite campo: ')
-            valor = input('Valor a eliminar: ')
-            eliminar_productos(campo,valor)        
+            eliminar_productos()        
         else:
             print('Ingresa una opción valida.')
                

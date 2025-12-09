@@ -1,167 +1,199 @@
-import csv
-import os
 import pandas as pd
 from tabulate import tabulate
+from database import conectar
+from supabase import SupabaseException
+from colorama import init,Fore
 import datetime
-from productos import ver_productos
+from dotenv import load_dotenv
 
-
-VENTAS_CSV = 'data/facturas.csv'
-CAMPOS = ['id','tipo_factura','numero','fecha','rnc','cliente','producto','cantidad','monto','ITBIS','TOTAL']
+load_dotenv()
+init()
+supabase = conectar()
 
 fecha = datetime.datetime.now()
-formato = fecha.strftime("%d/%m/%Y %H:%M:%S")
-
-def inicializar_csv():
-    if not os.path.exists(VENTAS_CSV):
-        with open(VENTAS_CSV, 'w', newline='', encoding='utf-8') as archivo:
-            write = csv.DictWriter(archivo, fieldnames=CAMPOS)
-            write.writeheader()
-            print(f"Archivo {VENTAS_CSV} creado exitosamente.\n")
-        
-def obtener_datos():
-    datos = []
-
-    try:
-        with open(VENTAS_CSV, 'r', newline='', encoding='utf-8') as archivo:
-            reader = csv.DictReader(archivo)
-            
-            for fila in reader:
-                datos.append(fila)
-    except FileNotFoundError:
-        print(f'El archivo {VENTAS_CSV} no existe. Valide si el archivo fue borrado o cambiado de ruta.')
-    
-    return datos
-
-def id_auto(datos):
-    if not datos:
-        return 1
-    
-    max_id = max(int(factura['id']) for factura in datos if factura['id'].isdigit())
-    
-    return max_id + 1
+formato = fecha.strftime("%Y-%m-%d %H:%M:%S")
 
 
 def buscar_producto(codigo):
     try:
-        with open('data/productos.csv', 'r', encoding='utf-8') as archivo:
-            reader = csv.DictReader(archivo)
-            
-            for fila in reader:
-                if fila['codigo_producto'] == str(codigo):
-                    return fila
-                
-    except FileNotFoundError:
-        print('El archivo de productos.csv no fue encontrado.')
+        producto = supabase.table("productos").select("producto, precio").eq("codigo_producto",codigo).execute()
+        return producto.data
         
+    except SupabaseException as e:
+        print("Error: ",e)
+        
+def secuencia_ncf(prefijo):
+    try:
+        
+        ultimo = (
+            supabase.table("facturas")
+            .select("numero")
+            .like("numero", f"{prefijo}%")
+            .order("id", desc=True)
+            .limit(1)
+            .execute()
+        )
+
+        if ultimo.data:
+            ncf = ultimo.data[0]["numero"] 
+            numero = int(ncf[len(prefijo):])
+            return numero + 1
+        else:
+            return 1
+
+    except Exception as e:
+        print("Error al obtener secuencia:", e)
+        return 1
+
+    except Exception as e:
+        print("Error al obtener secuencia: ", e)
+        return 1
 
 def validar_rnc(rnc):
     try:
-        with open('data/Listado_RNC.csv','r',encoding='utf-8') as archivo:
-            reader = csv.DictReader(archivo)
-            
-            for fila in reader:
-                if fila['RNC'] == str(rnc):
-                    return fila
+        cliente = supabase.table("lista_rnc").select("razon_social").eq("rnc",rnc).execute()
+        return cliente.data
         
-    except FileNotFoundError:
-        print('El archivo Listado_RNC.csv no fue encontrado.')
-    
-    return None
-
-
+    except SupabaseException as e:
+        print("Error: ",e)
 
 def ver_facturas():
-    df = pd.read_csv('data/facturas.csv', encoding='utf-8')
-    print(tabulate(df, headers='keys', tablefmt='fancy_grid')) # type: ignore
+    try:
+        datos = supabase.table("facturas").select("*").execute()
+        df = datos.data
+
+        if not df:
+            print("No hay productos registrados.")
+            return
+        
+        print(tabulate(df, headers="keys", tablefmt="fancy_grid")) # type: ignore
+
+    except Exception as e:
+        print("Error:", e) # type: ignore
     
     
-def venta_rnc():
-    inicializar_csv()
-    productos = obtener_datos()
-    
+def venta_con_rnc():   
     while True:
         rnc = input("Ingrese RNC del cliente: ")
-        
-        if not rnc.isdigit():
-            print('Este campo es unicamaente númerico.\n')
-            continue
-        
+
         if not (len(rnc) == 9 or len(rnc) == 11):
             print("Debe ingresar exactamente 9 dígitos (RNC) o 11 dígitos (Cédula).\n")
             continue
         
-        cliente_data = validar_rnc(rnc)
-        
-        if cliente_data:
-            print(f'Cliente encontrado: {cliente_data['RAZON_SOCIAL']}')
-            nombre_cliente = cliente_data['RAZON_SOCIAL']
+        cliente = validar_rnc(rnc)
+
+        if cliente:
+            nombre_cliente = cliente[0]["razon_social"]
+            print(f"\nCliente encontrado: {nombre_cliente}\n")
             break
         else:
-            print('RNC no encontrado en la base de datos.')
+            print("RNC no encontrado en la base de datos.\n")
             return
         
     while True:
-        codigo = input('Codfigo de producto: ')
-        
-        prod = buscar_producto(codigo)
-        
-        if prod:
-            print(f'producto: {prod['producto']}')
-            precio = float(prod['precio'])
+        codigo = input("Código del producto: ")
+        producto = buscar_producto(codigo)
+
+        if producto:
+            prod_nombre = producto[0]["producto"]
+            precio = float(producto[0]["precio"])
+            print(f"Producto: {prod_nombre} - Precio: {precio}\n")
             break
         else:
-            print(f'producto no encontrado o no está registrado.')
-        
+            print("Producto no encontrado.\n")
+    
+    secuencia = secuencia_ncf("B01")
     monto = float(input('Monto: '))
-    cantidad = monto/precio
+    cantidad = monto/precio    
     
-    datos = obtener_datos()
-    id_fact = id_auto(datos)
-    
-    
-    factura = {
-        'id': id_fact,
+    factura = supabase.table("facturas").insert({
         'tipo_factura': 'Con Comprobante Fiscal',
-        'numero': f'F-{id_fact}',
+        'numero': f'B01{(secuencia):010d}',
         'fecha': formato,
         'rnc': rnc,
         'cliente': nombre_cliente,
-        'producto': prod['producto'],
+        'producto': prod_nombre,
         'cantidad': cantidad,
         'monto' : monto,
-        'ITBIS' : 0.00,
-        'TOTAL' : monto
-    }
-        
-    with open(VENTAS_CSV, 'a', newline='', encoding='utf-8') as archivo:
-        writer = csv.DictWriter(archivo, fieldnames=CAMPOS) # type: ignore
-        writer.writerow(factura)    
+        'itbis' : 0.00,
+        'total' : monto
+    }).execute().data[0]
 
-    print(f'\nfactura generada y registrada correctamente.\n')
+    print(Fore.GREEN+f'\nfactura generada y registrada correctamente.\n'+Fore.RESET)
     
     print("\n----------------------------------------\n"
-        "           ESTACION CORAL SRL\n")
+        "           ESTACION SRL\n")
     print("**************FACTURA**************\n"
         f"Fecha: {factura['fecha']}\n"
-        f"tipo_factura: {factura['tipo_factura']}\n"
+        f"tipo de factura: {factura['tipo_factura']}\n"
         f"NCF: {factura['numero']}\n"
         f"RNC: {factura['rnc']}\n"
         f"Cliente: {factura['cliente']}\n"
         f"\nProducto                     monto\n"
         "------------------------------------\n"
-        f"{prod['producto']}............${float(prod['precio']):.2f}\n"
+        f"{prod_nombre}............${precio:.2f}\n"
         "\n"
-        f"Cantidad....................{float(factura['cantidad']):.2f} Gls.\n"
-        f"Subtotal...................${float(factura['monto']):.2f}\n"
-        f"ITBIS......................${float(factura['ITBIS']):.2f}\n"
-        f"Total.......................${float(factura['TOTAL']):.2f}\n"
+        f"Cantidad....................{cantidad:.2f} Gls.\n"
+        f"Subtotal...................${monto:.2f}\n"
+        f"ITBIS......................${0.00:.2f}\n"
+        f"Total.......................${monto:.2f}\n"
+        f"-----------------------------------------\n"
         f"*******GRACIAS POR PREFERIRNOS*******\n")
     print("----------------------------------------\n")
+    return
 
 
 def venta_sin_rnc():
-    pass
+    while True:
+        codigo = input("Código del producto: ")
+        producto = buscar_producto(codigo)
+
+        if producto:
+            prod_nombre = producto[0]["producto"]
+            precio = float(producto[0]["precio"])
+            print(f"Producto: {prod_nombre} - Precio: {precio}\n")
+            break
+        else:
+            print("Producto no encontrado.\n")
+    
+    secuencia = secuencia_ncf("B02")
+    monto = float(input('Monto: '))
+    cantidad = monto/precio    
+    
+    factura = supabase.table("facturas").insert({
+        'tipo_factura': 'Consumidor Final',
+        'numero': f'B02{(secuencia):010d}',
+        'fecha': formato,
+        'rnc': "",
+        'cliente': "",
+        'producto': prod_nombre,
+        'cantidad': cantidad,
+        'monto' : monto,
+        'itbis' : 0.00,
+        'total' : monto
+    }).execute().data[0]
+
+    print(Fore.GREEN+f'\nfactura generada y registrada correctamente.\n'+Fore.RESET)
+    
+    print("\n----------------------------------------\n"
+        "           ESTACION SRL\n")
+    print("**************FACTURA**************\n"
+        f"Fecha: {factura['fecha']}\n"
+        f"tipo de factura: {factura['tipo_factura']}\n"
+        f"NCF: {factura['numero']}\n"
+        f"RNC: {factura['rnc']}\n"
+        f"Cliente: {factura['cliente']}\n"
+        f"\nProducto                     monto\n"
+        "------------------------------------\n"
+        f"{prod_nombre}............${precio:.2f}\n"
+        "\n"
+        f"Cantidad....................{cantidad:.2f} Gls.\n"
+        f"Subtotal...................${monto:.2f}\n"
+        f"ITBIS......................${0.00:.2f}\n"
+        f"Total.......................${monto:.2f}\n"
+        f"-----------------------------------------\n"
+        f"*******GRACIAS POR PREFERIRNOS*******\n")
+    print("----------------------------------------\n")
 
 
 def  realizar_venta():
@@ -173,15 +205,14 @@ def  realizar_venta():
         
         opcion = input('Seleccione el tipo de factura: ')
         
-        if opcion == "3":
-            print("Facturación cancelada")
-            break
-        
-        elif opcion == '1':
-            venta_rnc()
+        if opcion == '1':
+            venta_con_rnc()
         elif opcion == '2':
             venta_sin_rnc()
+        elif opcion == '3':
+            break
             
         else:
             print("Opción invalida.\n")
             continue
+        return
