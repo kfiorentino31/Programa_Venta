@@ -11,11 +11,12 @@ El programa opera mediante consola y genera una factura formateada estilo ticket
 
 - Consulta de productos por código  
 - Validación de clientes mediante número de RNC  
-- Generación automática de NCF (B01)  
+- Generación automática de NCF (B01/B02)  
 - Registro de ventas  
-- Cálculo automático de litros según monto  
+- Cálculo automático de galones según monto  
 - Impresión de factura en formato ticket  
-- Código modular y fácil de mantener  
+- Código modular y fácil de mantener
+- Reporte de ventas (facturas en general o por productos)
 
 ---
 
