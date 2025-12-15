@@ -2,7 +2,8 @@ import datetime
 from database import conectar
 from productos import menu_productos
 from lista_clientes import menu_clientes
-from Facturas import realizar_venta, ver_facturas
+from Facturas import realizar_venta
+from reportes import menu_reporte
 from colorama import init, Fore, Back
 from dotenv import load_dotenv
 
@@ -20,27 +21,23 @@ def main():
                 "1. Venta\n"
                 "2. Productos\n"
                 "3. Clientes\n"
-                "4. Facturas\n"
-                "5. Usuarios\n"
-                "6. Salir\n")
+                "4. Reportes\n"
+                "5. Salir\n")
             
             opcion = input(Fore.CYAN+'Seleccione una opción: '+Fore.RESET)
             
-            if opcion == "6":
-                print("Cerrando sistema...")
-                print("Sistema cerrado")
-                break
-            
-            elif opcion == '1':
+            if opcion == '1':
                 realizar_venta()
             elif opcion == '2':
                 menu_productos()
             elif opcion == '3':
                 menu_clientes()
             elif opcion == '4':
-                ver_facturas()
+                menu_reporte()
             elif opcion == '5':
-                pass
+                print("Cerrando sistema...")
+                print("Sistema cerrado")
+                break
             else:
                 print('Opción invalida. Digite una valida.')
                 

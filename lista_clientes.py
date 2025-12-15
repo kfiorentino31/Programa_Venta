@@ -10,24 +10,40 @@ init()
 
 try:
     supabase = conectar()
-except Exception as ep:
-    print("Error: ",ep)
-except SupabaseException as e: # type: ignore
+except SupabaseException as e:
     print("Error: ",e)
 
-def  ver_clientes():
-    try:
-        datos = supabase.table("lista_rnc").select("*").order("id", asc=True).execute() # type: ignore
-        df = datos.data
+class ListaRNC:
+    def __init__(self,rnc,razon_social):
+        self.rnc = rnc
+        self.razon_social = razon_social
 
-        if not df:
-            print("No hay productos registrados.")
-            return
-        
-        print(tabulate(df, headers="keys", tablefmt="fancy_grid"))
+    def agregar(self):
+        try:
+            data = supabase.table("productos").insert({
+                "rnc": self.rnc,
+                "razon_social": self.razon_social
+            }).execute()
 
-    except Exception as e:
-        print("Error:", e)
+            print(Fore.GREEN + "Producto registrado exitosamente." + Fore.RESET)
+            print(data.data)
+            
+        except SupabaseException as e:
+            ("Error: ",e)
+    @staticmethod
+    def  listar():
+        try:
+            datos = supabase.table("lista_rnc").select("*").order("id", asc=True).execute()
+            df = datos.data
+
+            if not df:
+                print("No hay productos registrados.")
+                return
+            
+            print(tabulate(df, headers="keys", tablefmt="fancy_grid"))
+
+        except Exception as e:
+            print("Error:", e)
 
 def Cargar_clientes():
     try:
@@ -51,21 +67,13 @@ def registrar_cliente():
         rnc = input('Ingrese RNC: ')
         nombre_empresa = input('Ingrese nombre de empresa: ').upper()
 
-        datos = {
-            "rnc":rnc,
-            "razon_social":nombre_empresa
-            }
-        
-        data = supabase.table("lista_rnc").insert(datos).execute()
-        
-        print(Fore.GREEN+"\nNuevo cliente agregado existosamente."+Fore.RESET)
-        print(f"{Fore.GREEN}{data.data}{Fore.RESET}")
-        
-    except FileNotFoundError:
-        print("Archivo no encontrado, valide la ruta o nombre del archivo.")
+        cliente = ListaRNC(rnc, nombre_empresa)
+        cliente.agregar()
 
-    except Exception as e:
+    except SupabaseException as e:
         print("Error:", e)
+    except Exception as er:
+        print("Error Exception: ",er)
 
 def menu_clientes():
     while True:
@@ -79,7 +87,7 @@ def menu_clientes():
         opcion = input('Seleccione una opción: ')
         
         if opcion == '1':
-            ver_clientes()
+            ListaRNC.listar()
         elif opcion == '2':
             Cargar_clientes()
         elif opcion == '3':

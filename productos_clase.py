@@ -44,7 +44,7 @@ class ProductoCRUD:
                 print("No hay productos registrados.")
                 return
 
-            print(tabulate(df, headers="keys", tablefmt="fancy_grid")) # type: ignore
+            print(tabulate(df, headers="keys", tablefmt="fancy_grid"))
 
         except SupabaseException as e:
             print("Error:", e)
@@ -57,7 +57,7 @@ class ProductoCRUD:
             }).eq("codigo_producto", codigo).execute()
 
             print(Fore.GREEN + "Producto actualizado correctamente." + Fore.RESET)
-            print(Fore.GREEN + f"{data.data}" + Fore.RESET)
+            print(data.data)
 
         except SupabaseException as e:
             print("Error:", e)
@@ -67,8 +67,8 @@ class ProductoCRUD:
         try:
             data = supabase.table("productos").delete().eq("codigo_producto", codigo).execute()
 
-            print(Fore.GREEN + "\nProducto eliminado exitosamente." + Fore.RESET)
-            print(Fore.GREEN + f"{data.data}" + Fore.RESET)
+            print(Fore.GREEN + "Producto eliminado exitosamente." + Fore.RESET)
+            print(data.data)
 
         except SupabaseException as e:
             print("Error:", e)
@@ -94,7 +94,7 @@ def modificar_producto():
         print("1. Modificar precio")
         print("2. Modificar nombre")
         print("3. Modificar código")
-        print("4. Volver\n")
+        print("4. Volver")
 
         opcion = input("Seleccione una opción: ")
 
@@ -135,18 +135,19 @@ def menu_productos():
         print("2. Agregar producto")
         print("3. Modificar producto")
         print("4. Eliminar producto")
-        print("5. Volver\n")
+        print("5. Volver")
 
         opcion = input("Seleccione: ")
 
         if opcion == "1":
             ProductoCRUD.listar()
+
         elif opcion == "2":
             agregar_producto()
-            return
+
         elif opcion == "3":
             modificar_producto()
-            return
+
         elif opcion == "4":
             eliminar_producto()
 
