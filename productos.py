@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 from tabulate import tabulate
 from database import conectar
@@ -9,6 +10,9 @@ try:
     supabase = conectar()
 except Exception as e:
     print("Error al conectar a Supabase:", e)
+    
+def limpiar():
+    os.system("cls")
     
 class Producto:
     def __init__(self, codigo, nombre, precio, unidad):
@@ -99,25 +103,36 @@ def modificar_producto():
         opcion = input("Seleccione una opción: ")
 
         if opcion == "1":
+            limpiar()
             codigo = input("Código del producto a modificar: ")
             nuevo_precio = float(input("Nuevo precio: "))
             ProductoCRUD.modificar(codigo, "precio", nuevo_precio)
+            input("\nPresione Enter para continuar...")
+            limpiar()
             return
 
         elif opcion == "2":
+            limpiar()
             codigo = input("Código del producto a modificar: ")
             nuevo_nombre = input("Nuevo nombre del producto: ")
             ProductoCRUD.modificar(codigo, "producto", nuevo_nombre)
+            input("\nPresione Enter para continuar...")
+            limpiar()
             return
 
         elif opcion == "3":
+            limpiar()
             codigo = input("Código actual del producto: ")
             nuevo_codigo = input("Nuevo código del producto: ")
             ProductoCRUD.modificar(codigo, "codigo_producto", nuevo_codigo)
+            input("\nPresione Enter para continuar...")
+            limpiar()
             return
 
         elif opcion == "4":
+            limpiar()
             print("Volviendo al menú...")
+            limpiar()
             break
 
         else:
@@ -130,7 +145,7 @@ def eliminar_producto():
 
 def menu_productos():
     while True:
-        print("\n==== PRODUCTOS ====")
+        print("\n==== MENU PRODUCTOS ====")
         print("1. Lista de productos")
         print("2. Agregar producto")
         print("3. Modificar producto")
@@ -140,17 +155,22 @@ def menu_productos():
         opcion = input("Seleccione: ")
 
         if opcion == "1":
+            limpiar()
             ProductoCRUD.listar()
+            input("\nPresione Enter para continuar...")
+            limpiar()
         elif opcion == "2":
+            limpiar()
             agregar_producto()
-            return
         elif opcion == "3":
+            limpiar()
             modificar_producto()
-            return
         elif opcion == "4":
+            limpiar()
             eliminar_producto()
 
         elif opcion == "5":
+            limpiar()
             break
 
         else:

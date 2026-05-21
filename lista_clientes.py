@@ -1,4 +1,5 @@
 import csv
+import os
 import pandas as pd
 from colorama import init, Fore
 from tabulate import tabulate
@@ -29,11 +30,12 @@ class ListaRNC:
             print(data.data)
             
         except SupabaseException as e:
-            ("Error: ",e)
+            print("Error: ",e)
+            
     @staticmethod
     def  listar():
         try:
-            datos = supabase.table("lista_rnc").select("*").order("id", asc=True).execute()
+            datos = supabase.table("lista_rnc").select("*").order("id", asc=True).execute() # type: ignore
             df = datos.data
 
             if not df:
@@ -61,6 +63,9 @@ def Cargar_clientes():
 
     except Exception as e:
         print("Error:", e)
+    
+def limpiar():
+    os.system("cls")
 
 def registrar_cliente():
     try:
@@ -87,13 +92,17 @@ def menu_clientes():
         opcion = input('Seleccione una opción: ')
         
         if opcion == '1':
+            limpiar()
             ListaRNC.listar()
         elif opcion == '2':
+            limpiar()
             Cargar_clientes()
         elif opcion == '3':
+            limpiar()
             registrar_cliente()
         elif opcion == '4':
             print('Volviendo al menú principal...\n')
+            limpiar()
             break                      
         else:
             print('Ingresa una opción valida.\n')

@@ -9,8 +9,14 @@ from dotenv import load_dotenv
 load_dotenv()
 init()
 
-supabase = conectar()
+try:
+    supabase = conectar()
+except SupabaseException as e:
+    print("Error: ",e)
 
+def limpiar():
+    os.system("cls")
+    
 def ver_facturas():
     try:
         datos = supabase.table("facturas").select("*").execute()
@@ -27,9 +33,13 @@ def ver_facturas():
         df.to_excel(nombre_archivo, index=False)
 
         print(Fore.GREEN + f"Facturas exportadas correctamente a {nombre_archivo}" + Fore.RESET)
+        input("\nPresione Enter para continuar...")
+        os.system("cls")
 
     except Exception as e:
         print("Error al exportar facturas:", e)
+        input("\nPresione Enter para continuar...")
+        os.system("cls")
 
 def reporte_general():
     try:
@@ -69,9 +79,14 @@ def reporte_general():
             resumen.to_excel(writer, sheet_name="Resumen General", index=False)
 
         print(Fore.GREEN + f"Reporte generado correctamente: {nombre_archivo}" + Fore.RESET)
+        input("\nPresione Enter para continuar...")
+        os.system("cls")
 
     except Exception as e:
         print("Error al generar reporte:", e)
+        input("\nPresione Enter para continuar...")
+        os.system("cls")
+        return
 
 def grafica_de_productos():
     try:
@@ -84,13 +99,10 @@ def grafica_de_productos():
 
         df = pd.DataFrame(facturas)
 
-        # 3. Agrupar por producto y sumar cantidad vendida
         productos_vendidos = df.groupby("producto")["cantidad"].sum()
 
-        # 4. Crear carpeta si no existe
         os.makedirs("data", exist_ok=True)
 
-        # 5. Crear gráfica de barras
         plt.figure(figsize=(8, 5))
         productos_vendidos.plot(kind="bar")
         plt.title("Productos vendidos (Galones)")
@@ -105,6 +117,8 @@ def grafica_de_productos():
         plt.close()
 
         print(Fore.GREEN + f"Gráfica generada correctamente: {archivo}" + Fore.RESET)
+        input("\nPresione Enter para continuar...")
+        os.system("cls")
 
     except Exception as e:
         print("Error al generar la gráfica:", e)
@@ -112,22 +126,27 @@ def grafica_de_productos():
 
 def  menu_reporte():
     while True:
-        print("\n-----MENÚ VENTAS-----\n"
+        limpiar()
+        print("\n-----MENÚ REPORTES-----\n"
             "1. Reporte de facturas\n"
             "2. Reporte general\n"
-            "3. Gráfica de ventas por producto\n"
+            "3. Gráficas de productos\n"
             "4. Salir\n"
         )
 
         opcion = input("Seleccione una opción: ")
 
         if opcion == "1":
+            limpiar()
             ver_facturas()
         elif opcion == "2":
+            limpiar()
             reporte_general()
         elif opcion == "3":
+            limpiar()
             grafica_de_productos()
         elif opcion == "4":
+            limpiar()
             break
             
         else:

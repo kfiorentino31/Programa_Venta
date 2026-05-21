@@ -1,4 +1,5 @@
 import pandas as pd
+import os
 from tabulate import tabulate
 from database import conectar
 from supabase import SupabaseException
@@ -9,6 +10,9 @@ try:
     supabase = conectar()
 except Exception as e:
     print("Error al conectar a Supabase:", e)
+
+def limpiar():
+    os.system("cls")
     
 class Producto:
     def __init__(self, codigo, nombre, precio, unidad):
@@ -89,6 +93,7 @@ def agregar_producto():
 
 
 def modificar_producto():
+    limpiar()
     while True:
         print("\n=== MODIFICAR PRODUCTO ===")
         print("1. Modificar precio")
@@ -129,6 +134,7 @@ def eliminar_producto():
     ProductoCRUD.eliminar(codigo)
 
 def menu_productos():
+    limpiar()
     while True:
         print("\n==== PRODUCTOS ====")
         print("1. Lista de productos")
@@ -140,18 +146,23 @@ def menu_productos():
         opcion = input("Seleccione: ")
 
         if opcion == "1":
+            limpiar()
             ProductoCRUD.listar()
 
         elif opcion == "2":
+            limpiar()
             agregar_producto()
 
         elif opcion == "3":
+            limpiar()
             modificar_producto()
 
         elif opcion == "4":
+            limpiar()
             eliminar_producto()
 
         elif opcion == "5":
+            limpiar()
             break
 
         else:

@@ -1,4 +1,5 @@
 import pandas as pd
+import os
 from tabulate import tabulate
 from database import conectar
 from supabase import SupabaseException
@@ -8,11 +9,17 @@ from dotenv import load_dotenv
 
 load_dotenv()
 init()
-supabase = conectar()
+
+try:
+    supabase = conectar()
+except SupabaseException as e:
+    print("Error: ",e)
 
 fecha = datetime.datetime.now()
 formato = fecha.strftime("%Y-%m-%d %H:%M:%S")
 
+def limpiar():
+    os.system("cls")
 
 def buscar_producto(codigo):
     try:
@@ -72,7 +79,8 @@ def ver_facturas():
         print("Error:", e) # type: ignore
     
     
-def venta_con_rnc():   
+def venta_con_rnc():
+    limpiar()   
     while True:
         rnc = input("Ingrese RNC del cliente: ")
 
@@ -118,7 +126,9 @@ def venta_con_rnc():
         'itbis' : 0.00,
         'total' : monto
     }).execute().data[0]
-
+    
+    limpiar() 
+    
     print(Fore.GREEN+f'\nfactura generada y registrada correctamente.\n'+Fore.RESET)
     
     print("\n----------------------------------------\n"
@@ -140,10 +150,13 @@ def venta_con_rnc():
         f"-----------------------------------------\n"
         f"*******GRACIAS POR PREFERIRNOS*******\n")
     print("----------------------------------------\n")
-    return
+    
+    input("\nPresione Enter para continuar...")
+    limpiar()
 
 
 def venta_sin_rnc():
+    limpiar() 
     while True:
         codigo = input("Código del producto: ")
         producto = buscar_producto(codigo)
@@ -172,6 +185,8 @@ def venta_sin_rnc():
         'itbis' : 0.00,
         'total' : monto
     }).execute().data[0]
+    
+    limpiar() 
 
     print(Fore.GREEN+f'\nfactura generada y registrada correctamente.\n'+Fore.RESET)
     
@@ -194,6 +209,9 @@ def venta_sin_rnc():
         f"-----------------------------------------\n"
         f"*******GRACIAS POR PREFERIRNOS*******\n")
     print("----------------------------------------\n")
+    
+    input("\nPresione Enter para continuar...")
+    limpiar()
 
 
 def  realizar_venta():
@@ -206,10 +224,13 @@ def  realizar_venta():
         opcion = input('Seleccione el tipo de factura: ')
         
         if opcion == '1':
+            limpiar()
             venta_con_rnc()
         elif opcion == '2':
+            limpiar()
             venta_sin_rnc()
         elif opcion == '3':
+            limpiar()
             break
             
         else:
