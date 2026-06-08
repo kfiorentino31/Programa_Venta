@@ -103,12 +103,10 @@ def grafica_de_productos():
 
         os.makedirs("data", exist_ok=True)
 
+        
         plt.figure(figsize=(8, 5))
-        productos_vendidos.plot(kind="bar")
-        plt.title("Productos vendidos (Galones)")
-        plt.xlabel("Producto")
-        plt.ylabel("Galones vendidos")
-        plt.xticks(rotation=45, ha="right")
+        productos_vendidos.plot(kind="pie",autopct ="%1.0f%%")
+        plt.title("Grafico de venta de galones")
         plt.tight_layout()
 
         # 6. Guardar gráfica
@@ -117,11 +115,11 @@ def grafica_de_productos():
         plt.close()
 
         print(Fore.GREEN + f"Gráfica generada correctamente: {archivo}" + Fore.RESET)
-        input("\nPresione Enter para continuar...")
-        os.system("cls")
+        os.system("pause")
 
     except Exception as e:
         print("Error al generar la gráfica:", e)
+        os.system("pause")
 
 
 def  menu_reporte():

@@ -18,6 +18,7 @@ def limpiar():
 def main():
     try:
         conectar()
+        limpiar()
         while True:
             print(Fore.CYAN+"\n==== SISTEMA DE VENTA DE COMBUSTIBLE ====")
             print("\n---PRODUCTOS---\n"
@@ -44,6 +45,8 @@ def main():
             elif opcion == '5':
                 print("Cerrando sistema...")
                 print("Sistema cerrado")
+                os.system("pause")
+                limpiar()
                 break
             else:
                 print('Opción invalida. Digite una valida.')
